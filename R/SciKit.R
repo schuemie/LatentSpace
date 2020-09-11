@@ -43,6 +43,25 @@ prepareForSciKit <- function(outputFolder) {
   write.csv(features, file.path(outputFolder, "features.csv"), row.names = FALSE)
   write.csv(featureRef, file.path(outputFolder, "featureRef.csv"), row.names = FALSE)
 
+  # Train-test split:
+  rowIds <- unique(features$rowId)
+  trainRowIds <- sample(rowIds, size = 0.75 * length(rowIds), replace = FALSE)
+  testRowIds <- rowIds[!rowIds %in% trainRowIds]
+
+  trainFeatures <- features[features$rowId %in% trainRowIds, ]
+  testFeatures <- features[features$rowId %in% testRowIds, ]
+
+  # Make feature space identical by deleting non-shared:
+  trainCovariatesIds <- unique(trainFeatures$covariateId)
+  testCovariateIds <- unique(testFeatures$covariateId)
+  sharedCovariatesIds <- trainCovariatesIds[trainCovariatesIds %in% testCovariateIds]
+  trainFeatures <- trainFeatures[trainFeatures$covariateId %in% sharedCovariatesIds, ]
+  testFeatures <- testFeatures[testFeatures$covariateId %in% sharedCovariatesIds, ]
+
+  write.csv(trainFeatures, file.path(outputFolder, "trainFeatures.csv"), row.names = FALSE)
+  write.csv(testFeatures, file.path(outputFolder, "testFeatures.csv"), row.names = FALSE)
+
+
   # Old code: using FeatureExtraction, so binary, no counts:
   # covariateData <- FeatureExtraction::loadCovariateData(file.path(outputFolder, "CovariateData.zip"))
   # covariateData <- FeatureExtraction::tidyCovariateData(covariateData)
@@ -74,4 +93,19 @@ prepareForSciKit <- function(outputFolder) {
   # write.csv(covariateRef, file.path(outputFolder, "covariateRef.csv"), row.names = FALSE)
 
 
+}
+
+readFromSciKit <- function(outputFolder) {
+  ldaComponents <- readr::read_csv(file.path(outputFolder, "componentsLda.csv"))
+  featureRef <- readr::read_csv(file.path(outputFolder, "featureRef.csv"))
+  ldaComponents <- inner_join(ldaComponents, featureRef, by = "covariateId")
+  output <- NULL
+  for (factorId in unique(ldaComponents$factorId)) {
+    x <- ldaComponents %>%
+      filter(.data$factorId == !!factorId) %>%
+      arrange(desc(.data$value)) %>%
+      select(.data$factorId, .data$value, .data$conceptName)
+    output <- bind_cols(output, x)
+  }
+  readr::write_csv(output, file.path(outputFolder, "factors.csv"))
 }

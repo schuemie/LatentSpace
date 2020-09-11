@@ -12,17 +12,17 @@ covaCoo = coo_matrix((covariates.covariateValue, (covariates.rowId, covariates.c
 ###################### LDA ####################################
 
 # Run LDA
-lda = LatentDirichletAllocation(n_components=10,           # Number of topics
-                                max_iter=50,               # Max learning iterations
-                                learning_method='online',   
+lda = LatentDirichletAllocation(n_components=100,           # Number of topics
+                                max_iter=200,               # Max learning iterations
+                                learning_method='batch',   
                                 random_state=100,          # Random state
                                 n_jobs = 32,               # Use all available CPUs
-								                verbose = 1)
+								verbose = 1)
 
 
 # lda = LatentDirichletAllocation(n_topics=100, max_iter=10, learning_method='online', learning_offset=50.,random_state=0, n_jobs=30)
 # lda = LatentDirichletAllocation(n_topics=100, max_iter=50, learning_method='batch', random_state=0, verbose = 1)
-#lda.fit(covaCoo)
+lda.fit(covaCoo)
 
 # Grid search
 search_params = {'n_components': [10, 20, 40, 80, 160]}
@@ -84,3 +84,4 @@ with open('s:/LatentSpace/componentsLda.csv', 'w') as f:
 	for factorId in range(len(components)):
 		for covariateId in range(len(components[0])):
 			writer.writerow([factorId, covariateId, components[factorId, covariateId]])
+

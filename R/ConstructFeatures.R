@@ -49,6 +49,8 @@ constructFeatures <- function(connectionDetails,
                                            cdm_database_schema = cdmDatabaseSchema,
                                            oracleTempSchema = oracleTempSchema)
   DatabaseConnector::executeSql(connection, sql, progressBar = FALSE, reportOverallTime = FALSE)
+  features <- filter(features, .data$covariateId != 0)
+  featureRef <- filter(featureRef, .data$covariateId != 0)
   saveRDS(features, file.path(outputFolder, "Features.rds"))
   saveRDS(featureRef, file.path(outputFolder, "FeatureRef.rds"))
 
